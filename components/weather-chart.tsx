@@ -3,52 +3,13 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { fetchWeatherData } from "../lib/fetchWeatherData"
 
 interface WeatherChartProps {
     city: string
     metric: string
     period: string
     unit: string
-}
-
-// Generate mock data based on parameters
-function generateMockData(
-    metric: string,
-    period: string,
-    unit: string,
-): Array<{ time: string; value: number; hour: number }> {
-    const dataPoints = period === "48時間" ? 49 : 7
-    const data = []
-
-    for (let i = 0; i < dataPoints; i++) {
-        let value = 0
-        const baseValue = Math.random() * 10 + 15
-
-        switch (metric) {
-            case "気温":
-                value = unit === "°C" ? baseValue + Math.sin(i / 3) * 5 : (baseValue + Math.sin(i / 3) * 5) * 1.8 + 32
-                break
-            case "湿度":
-                value = 50 + Math.random() * 30
-                break
-            case "風速":
-                value = 5 + Math.random() * 15
-                break
-            case "降水量":
-                value = Math.random() * 10
-                break
-        }
-
-        const timeLabel = period === "48時間" ? (i === 0 ? "現在" : `+${i}h`) : i === 0 ? "今日" : `+${i}日`
-
-        data.push({
-            time: timeLabel,
-            value: Math.round(value * 10) / 10,
-            hour: i, // Add hour index for custom tick rendering
-        })
-    }
-
-    return data
 }
 
 function getMetricLabel(metric: string, unit: string): string {
@@ -87,13 +48,15 @@ export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) 
 
     useEffect(() => {
         setIsLoading(true)
-        // Simulate data loading
-        const timer = setTimeout(() => {
-            setData(generateMockData(metric, period, unit))
-            setIsLoading(false)
-        }, 500)
-
-        return () => clearTimeout(timer)
+        fetchWeatherData(city, metric, period, unit)
+            .then((fetchedData) => {
+                setData(fetchedData)
+            })
+            .catch((error) => {
+                console.error("Error fetching data:", error)
+                setData([])
+            })
+            .finally(() => setIsLoading(false))
     }, [city, metric, period, unit])
 
     const CustomTick = (props: any) => {
