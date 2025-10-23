@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import useSWR from "swr"
 import { motion, AnimatePresence } from "framer-motion"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { fetchWeatherData } from "../lib/fetchWeatherData"
+import { useMemo } from "react"
 
 interface WeatherChartProps {
     city: string
@@ -43,21 +44,17 @@ function getMetricName(metric: string): string {
 }
 
 export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) {
-    const [data, setData] = useState<Array<{ time: string; value: number; hour: number }>>([])
-    const [isLoading, setIsLoading] = useState(true)
+    // SWRキーをユニークに生成（cityなどが変わるたび再取得）
+    const swrKey = useMemo(() => [city, metric, period, unit].join("-"), [city, metric, period, unit])
 
-    useEffect(() => {
-        setIsLoading(true)
-        fetchWeatherData(city, metric, period, unit)
-            .then((fetchedData) => {
-                setData(fetchedData)
-            })
-            .catch((error) => {
-                console.error("Error fetching data:", error)
-                setData([])
-            })
-            .finally(() => setIsLoading(false))
-    }, [city, metric, period, unit])
+    const { data, error, isLoading } = useSWR<Array<{ time: string; value: number; hour: number }>>(swrKey,
+        () => fetchWeatherData(city, metric, period, unit),
+        {
+            revalidateOnFocus: false,      // タブを戻ってきても再取得しない
+            revalidateOnReconnect: true,   // オンライン復帰時のみ再取得
+            refreshInterval: 30 * 60 * 1000, // 30分ごとに再取得
+        }
+    )
 
     const CustomTick = (props: any) => {
         const { x, y, payload } = props
@@ -65,7 +62,6 @@ export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) 
 
         // For 48 hours, show every 6 hours; for 7 days, show all
         const shouldShow = period === "48時間" ? hour === 0 || hour % 6 === 0 : true
-
         if (!shouldShow) return null
 
         const label = period === "48時間" ? (hour === 0 ? "現在" : `+${hour}h`) : hour === 0 ? "今日" : `+${hour}日`
@@ -85,6 +81,7 @@ export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) 
 
             <AnimatePresence mode="wait">
                 {isLoading ? (
+                    // ローディングアニメーションはそのまま
                     <motion.div
                         key="loading"
                         initial={{ opacity: 0 }}
@@ -93,6 +90,17 @@ export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) 
                         className="flex h-[400px] items-center justify-center"
                     >
                         <div className="h-12 w-12 animate-spin rounded-full border-4 border-white/20 border-t-[#fbbf24]" />
+                    </motion.div>
+                ) : error ? (
+                    // エラーハンドリング
+                    <motion.div
+                        key="error"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex h-[400px] items-center justify-center text-white/70"
+                    >
+                        データを取得できませんでした。
                     </motion.div>
                 ) : (
                     <motion.div
