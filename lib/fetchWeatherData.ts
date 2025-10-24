@@ -29,17 +29,10 @@ export async function fetchWeatherData(
     const coords = cityCoords[city]
     if (!coords) throw new Error(`都市 "${city}" の座標が見つかりません`)
 
-    // 現在時刻を ISO 形式で取得
-    const now = new Date()
-    const startISO = now.toISOString()
-
-    // 取得時間範囲
-    const hours = period === "48時間" ? 49 : 24 * 7
-
     const hourlyParams = ["temperature_2m", "relative_humidity_2m", "precipitation", "windspeed_10m"].join(",")
 
     // API URL（start パラメータで現在時刻以降を取得）
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&hourly=${hourlyParams}&start=${startISO}&timezone=Asia%2FTokyo`
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&hourly=${hourlyParams}&timezone=Asia%2FTokyo`
 
     // fetch。SWRでキャッシュを有効にするなら cacheオプションは削除または 'force-cache' に
     const res = await fetch(url)
@@ -52,27 +45,51 @@ export async function fetchWeatherData(
 
     if (!values || !times) throw new Error("APIレスポンスに必要なデータが含まれていません")
 
-    // 取得した分だけデータを切り出し
-    const slicedValues = values.slice(0, hours)
-    const slicedTimes = times.slice(0, hours)
+    // 現在時刻に最も近いインデックスを取得
+    const now = new Date()
+
+    console.log(now)
+
+    let currentIndex = times.findIndex(t => new Date(t).getTime() >= now.getTime())
+    if (currentIndex === -1) throw new Error("現在時刻に対応するデータが見つかりません")
+    else if (currentIndex > 0) {
+        currentIndex = currentIndex - 1
+    }
+
+    let slicedValues: number[]
+    let slicedTimes: string[]
+
+    if (period === "48時間") {
+        slicedValues = values.slice(currentIndex, currentIndex + 49)
+        slicedTimes = times.slice(currentIndex, currentIndex + 49)
+    } else {
+        // 7日間モード: 現在時刻から24hごとに7点
+        slicedValues = []
+        slicedTimes = []
+        for (let i = 0; i < 7; i++) {
+            const idx = currentIndex + i * 24
+            if (idx < values.length) {
+                slicedValues.push(values[idx])
+                slicedTimes.push(times[idx])
+            }
+        }
+    }
+
+    console.log(slicedValues)
+    console.log(slicedTimes)
 
     const rawData = slicedTimes.map((t, i) => ({
         time:
             period === "48時間"
                 ? i === 0 ? "現在" : `+${i}h`
-                : i % 24 === 0
-                    ? i === 0 ? "今日" : `+${Math.floor(i / 24)}日`
-                    : "",
+                : i === 0 ? "今日" : `+${i}日`,
         value: metric === "気温" && unit === "°F"
             ? Math.round((slicedValues[i] * 1.8 + 32) * 10) / 10
             : Math.round(slicedValues[i] * 10) / 10,
         hour: i
     }))
 
-    // 7日間モードは24時間ごとに1点だけ残す
-    const filteredData = period === "7日間"
-        ? rawData.filter((_, i) => i % 24 === 0).map((d, i) => ({ ...d, hour: i }))
-        : rawData
+    console.log(rawData)
 
-    return filteredData
+    return rawData
 }
