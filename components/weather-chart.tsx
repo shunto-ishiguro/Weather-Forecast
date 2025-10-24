@@ -59,8 +59,15 @@ export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) 
         }
     )
 
-    const CustomTick = (props: any) => {
-        const { x, y, payload } = props
+    interface CustomTickProps {
+        x?: number
+        y?: number
+        payload?: { value: number }
+    }
+
+    const CustomTick = ({ x, y, payload }: CustomTickProps) => {
+        if (!payload) return null
+
         const hour = payload.value
 
         const interval = 6
@@ -68,7 +75,7 @@ export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) 
 
         if (!shouldShow) return null
 
-        const label = period === "48時間" ? (hour === 0 ? "現在" : `+${hour}h`) : hour === 0 ? "今日" : `+${hour}日`
+        const label = period === "48時間" ? (hour === 0 ? "現在" : `+${hour}時間`) : hour === 0 ? "今日" : `+${hour}日`
 
         return (
             <g transform={`translate(${x},${y})`}>
@@ -117,7 +124,7 @@ export function WeatherChart({ city, metric, period, unit }: WeatherChartProps) 
                     >
                         <div style={isMobile ? { minWidth: 1000, height: 400 } : { height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={data} margin={{ top: 40, right: 30, left: 0, bottom: 20 }}>
+                                <LineChart data={data} margin={{ top: 40, right: 40, left: 0, bottom: 20 }}>
                                     <defs>
                                         <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
                                             <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.8} />
