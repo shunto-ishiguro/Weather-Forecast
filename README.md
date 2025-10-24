@@ -1,36 +1,163 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Weather Forecast Dashboard
 
-## Getting Started
+リアルタイム天気予報を美しいグラスモーフィズムデザインで表示するNext.jsアプリケーション
 
-First, run the development server:
+## 目次
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- [起動手順](#起動手順)
+- [技術選定理由](#技術選定理由)
+- [ディレクトリ構成](#ディレクトリ構成)
+- [主な機能](#主な機能)
+- [工夫点](#工夫点)
+- [既知の制約](#既知の制約)
+
+## 起動手順
+
+### リンク
+
+## 技術選定理由
+
+### フレームワーク・ライブラリ
+
+| 技術 | バージョン | 選定理由 |
+|------|-----------|----------|
+| **Next.js** | 15.5.6 | ・React Server Componentsとクライアントコンポーネントの柔軟な使い分け<br>・Turbopackによる高速なビルドとHMR<br>・Vercelへのシームレスなデプロイ対応 |
+| **React** | 19.1.0 | ・最新の並行レンダリング機能<br>・improved Hooks API |
+| **TypeScript** | 5.9.3 | ・型安全性の確保<br>・開発体験とコード品質の向上 |
+| **Tailwind CSS v4** | 4.1.15 | ・最新のカスケードレイヤー機能<br>・パフォーマンス改善<br>・カスタムプロパティによる柔軟なテーマ設定 |
+| **Framer Motion** | 12.23.24 | ・滑らかなアニメーション実装<br>・宣言的なAPI<br>・パフォーマンスの最適化 |
+| **Recharts** | 3.3.0 | ・D3.jsベースのチャートライブラリ<br>・React向けに設計されたAPI<br>・レスポンシブ対応 |
+| **SWR** | 2.3.6 | ・効率的なデータフェッチング<br>・自動キャッシング<br>・リアルタイム更新対応 |
+
+### UI/UXライブラリ
+
+- **Radix UI**: アクセシブルなセレクトコンポーネント
+- **Lucide React**: 軽量なアイコンライブラリ
+- **react-responsive**: レスポンシブデザインの実装
+
+## ディレクトリ構成
+
+```
+weather-forecast/
+├── app/                      # Next.js App Router
+│   ├── globals.css          # グローバルスタイル（Tailwind設定含む）
+│   ├── layout.tsx           # ルートレイアウト
+│   └── page.tsx             # トップページ
+├── components/              # Reactコンポーネント
+│   ├── control-panel.tsx   # コントロールパネル（都市・指標選択）
+│   ├── weather-chart.tsx   # 天気チャート表示
+│   └── ui/                 # UIコンポーネント
+│       ├── select.tsx      # セレクトコンポーネント
+│       └── utils.ts        # ユーティリティ関数
+├── lib/                     # ビジネスロジック
+│   └── fetchWeatherData.ts # 天気データ取得API
+├── public/                  # 静的ファイル
+└── package.json            # 依存関係定義
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 主な機能
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. リアルタイム天気予報
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Open-Meteo APIを使用した正確な天気データ取得
+- 現在時刻から最大7日間の予報表示
+- 1時間ごとの詳細データ
 
-## Learn More
+### 2. インタラクティブな操作
 
-To learn more about Next.js, take a look at the following resources:
+- **都市選択**: 東京、大阪、札幌、福岡、名古屋
+- **気象指標**: 気温、湿度、風速、降水量
+- **期間切替**: 48時間 / 7日間
+- **単位変換**: 摂氏 / 華氏
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. グラスモーフィズムUI
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 半透明のパネルとぼかし効果
+- グラデーション背景
+- スムーズなホバーエフェクト
 
-## Deploy on Vercel
+### 4. レスポンシブデザイン
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- モバイル表示時は横スクロール対応
+- タブレット・デスクトップで最適化されたレイアウト
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 工夫点
+
+### パフォーマンス最適化
+
+1. **SWRによる効率的なデータ管理**
+   - キャッシング戦略: 30分間隔で自動更新
+   - タブ切替時の不要な再取得を防止
+   - オンライン復帰時のみ再取得
+
+2. **動的インポートとコード分割**
+   - Rechartsコンポーネントの遅延読み込み
+   - 初期バンドルサイズの削減
+
+3. **Turbopack採用**
+   - 高速なHMR（Hot Module Replacement）
+   - ビルド時間の短縮
+
+### UX向上
+
+1. **アニメーション**
+   - Framer Motionによる滑らかな画面遷移
+   - ローディング状態の明確な表示
+   - インタラクティブなボタン操作
+
+2. **アクセシビリティ**
+   - Radix UIのアクセシブルコンポーネント使用
+   - キーボードナビゲーション対応
+   - 適切なARIA属性
+
+3. **データビジュアライゼーション**
+   - カスタムツールチップで詳細情報表示
+   - グラデーションを使用した美しいグラフ
+   - レスポンシブなチャートサイズ
+
+### コード品質
+
+1. **TypeScript厳格モード**
+   - 型安全性の確保
+   - 開発時のエラー早期発見
+
+2. **ESLint設定**
+   - Next.js推奨設定の適用
+   - TypeScript対応ルール
+
+3. **関数分離**
+   - データ取得ロジックの独立
+   - 再利用可能なコンポーネント設計
+
+## 既知の制約
+
+### API制限
+
+- **Open-Meteo API**: 無料枠での使用
+  - 商用利用には制限がある可能性
+  - リクエスト数に上限がある場合がある
+
+### データ更新頻度
+
+- SWRの更新間隔: 30分
+- リアルタイム性が求められる場合は調整が必要
+
+### 対応都市
+
+- 現在5都市に限定（東京、大阪、札幌、福岡、名古屋）
+- 新しい都市を追加する場合は`lib/fetchWeatherData.ts`の`cityCoords`を更新
+
+### ブラウザ対応
+
+- モダンブラウザ推奨
+- IE11以前のブラウザは非対応
+
+### モバイル表示
+
+- 48時間表示時、モバイルでは横スクロールが必要
+- 画面幅1000px未満で横スクロールが発生
+
+### タイムゾーン
+
+- APIから取得するデータは日本時間（Asia/Tokyo）固定
+- 他のタイムゾーンには未対応
