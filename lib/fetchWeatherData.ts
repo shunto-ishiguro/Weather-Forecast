@@ -81,7 +81,7 @@ export async function fetchWeatherData(
     const rawData = slicedTimes.map((t, i) => ({
         time:
             period === "48時間"
-                ? i === 0 ? "現在" : `+${i}h`
+                ? i === 0 ? "現在" : `+${i}時間`
                 : i === 0 ? "今日" : `+${i}日`,
         value: metric === "気温" && unit === "°F"
             ? Math.round((slicedValues[i] * 1.8 + 32) * 10) / 10
