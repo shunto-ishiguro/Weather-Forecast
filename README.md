@@ -15,6 +15,8 @@
 
 ### リンク
 
+**デプロイ先（Vercel）:** [Weather Forecast Dashboard](https://weather-forecast-112f48nw0-shunto-ishiguros-projects.vercel.app/)
+
 ## 技術選定理由
 
 ### フレームワーク・ライブラリ
